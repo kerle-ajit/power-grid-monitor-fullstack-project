@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: gridwatch-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gridwatch
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: gridwatch-redis
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gridwatch-backend
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/gridwatch?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: super-secret-gridwatch
+      INGEST_QUEUE_NAME: ingest_batches
+      SILENCE_QUEUE_NAME: silence_scan
+      ESCALATION_QUEUE_NAME: alert_escalation
+      SOCKET_CORS_ORIGIN: "*"
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gridwatch-frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:4000
+    ports:
+      - "5173:5173"
+
+volumes:
+  pgdata:
+
