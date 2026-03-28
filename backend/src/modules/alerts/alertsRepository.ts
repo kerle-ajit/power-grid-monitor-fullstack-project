@@ -5,12 +5,14 @@ export function createAlertsRepository() {
   return {
     async listAlertsForUser(
       user: { id: string; role: "OPERATOR" | "SUPERVISOR"; zoneIds: string[] },
-      query: { status?: string; page: number; pageSize: number; includeSuppressed: boolean }
+      query: { status?: string; sensorId?: string; page: number; pageSize: number; includeSuppressed: boolean }
     ) {
       const status = query.status ? (query.status as any) : undefined;
       const where: any = {
         ...(user.role === "SUPERVISOR" ? {} : { zoneId: { in: user.zoneIds } })
       };
+
+      if (query.sensorId) where.sensorId = query.sensorId;
 
       if (status) where.status = status;
 
