@@ -1,0 +1,264 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OPERATOR
+  SUPERVISOR
+}
+
+enum AlertStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum AlertSeverity {
+  WARNING
+  CRITICAL
+}
+
+enum AnomalyType {
+  THRESHOLD
+  SPIKE
+  SILENCE
+}
+
+enum SensorMetric {
+  VOLTAGE
+  TEMPERATURE
+}
+
+enum SensorState {
+  HEALTHY
+  WARNING
+  CRITICAL
+  SILENT
+}
+
+model Zone {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  sensors Sensor[]
+  operators UserZone[]
+  alerts Alert[]
+
+  @@index([name])
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+
+  zoneAssignments UserZone[]
+  alertsAssignedTo Alert[] @relation("AlertAssignedTo")
+  alertAuditLogs AlertAuditLog[]
+  suppressionsCreated Suppression[]
+
+  @@index([role])
+}
+
+model UserZone {
+  userId String
+  zoneId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  zone   Zone   @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@id([userId, zoneId])
+  @@index([zoneId])
+}
+
+model Sensor {
+  id        String   @id @default(uuid())
+  name      String
+  zoneId    String
+  createdAt DateTime @default(now())
+
+  zone Zone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  readings Reading[]
+  rule RuleConfig?
+
+  state SensorStateRow?
+
+  anomalies Anomaly[]
+  alerts Alert[]
+
+  suppressions Suppression[]
+
+  @@index([zoneId])
+}
+
+model RuleConfig {
+  id String @id @default(uuid())
+  sensorId String @unique
+
+  voltageMin   Float
+  voltageMax   Float
+  temperatureMin Float
+  temperatureMax Float
+
+  spikePercentVoltage Float
+  spikePercentTemperature Float
+
+  // Which severity to assign when each rule triggers
+  thresholdSeverityVoltage AlertSeverity
+  thresholdSeverityTemperature AlertSeverity
+  spikeSeverityVoltage AlertSeverity
+  spikeSeverityTemperature AlertSeverity
+  silenceSeverity AlertSeverity
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sensor Sensor @relation(fields: [sensorId], references: [id], onDelete: Cascade)
+}
+
+model IngestBatch {
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now())
+  readingCount Int
+  status        String
+  lastError     String?
+
+  readings Reading[]
+
+  @@index([createdAt])
+  @@index([status])
+}
+
+model Reading {
+  id           String   @id @default(uuid())
+  sensorId     String
+  batchId      String?
+  timestamp    DateTime
+
+  voltage      Float
+  current      Float
+  temperature  Float
+  statusCode   Int
+
+  sensor Sensor @relation(fields: [sensorId], references: [id], onDelete: Cascade)
+  batch  IngestBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+
+  anomalies Anomaly[]
+
+  @@index([sensorId, timestamp])
+  @@index([batchId])
+}
+
+model Anomaly {
+  id        String @id @default(uuid())
+  type      AnomalyType
+  metric    SensorMetric?
+
+  sensorId  String
+  readingId String?
+  createdAt DateTime @default(now())
+  timestamp DateTime
+
+  valueJson  Json?
+  severity   AlertSeverity
+  suppressed Boolean @default(false)
+
+  sensor Sensor @relation(fields: [sensorId], references: [id], onDelete: Cascade)
+  reading Reading? @relation(fields: [readingId], references: [id], onDelete: SetNull)
+
+  alert Alert? @relation("AnomalyAlert")
+
+  @@index([sensorId, timestamp])
+  @@index([type, sensorId])
+}
+
+model Alert {
+  id        String @id @default(uuid())
+  anomalyId String? @unique
+
+  sensorId  String
+  zoneId    String
+
+  status    AlertStatus
+  severity  AlertSeverity
+  suppressed Boolean @default(false)
+
+  // Who currently owns the alert (operator for initial delivery, supervisor after escalation)
+  assignedToUserId String?
+  assignedToUser User? @relation("AlertAssignedTo", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  escalatedAt DateTime?
+
+  sensor Sensor @relation(fields: [sensorId], references: [id], onDelete: Cascade)
+  zone   Zone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  auditLogs AlertAuditLog[]
+  escalationLogs EscalationLog[]
+
+  anomaly Anomaly? @relation("AnomalyAlert", fields: [anomalyId], references: [id], onDelete: SetNull)
+
+  @@index([zoneId, status])
+  @@index([sensorId, status])
+}
+
+model AlertAuditLog {
+  id String @id @default(uuid())
+  alertId String
+  changedAt DateTime @default(now())
+
+  fromStatus AlertStatus?
+  toStatus AlertStatus
+  changedByUserId String
+
+  alert Alert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  changedByUser User @relation(fields: [changedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([alertId, changedAt])
+}
+
+model EscalationLog {
+  id String @id @default(uuid())
+  alertId String @unique
+  escalatedAt DateTime @default(now())
+  fromUserId String?
+  toUserId String?
+
+  alert Alert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+
+  @@index([escalatedAt])
+}
+
+model Suppression {
+  id String @id @default(uuid())
+  sensorId String
+  startTime DateTime
+  endTime DateTime
+
+  createdByUserId String
+  createdAt DateTime @default(now())
+
+  sensor Sensor @relation(fields: [sensorId], references: [id], onDelete: Cascade)
+  createdByUser User @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([sensorId, startTime, endTime])
+}
+
+model SensorStateRow {
+  sensorId String @id
+  state SensorState
+  updatedAt DateTime @default(now())
+
+  sensor Sensor @relation(fields: [sensorId], references: [id], onDelete: Cascade)
+}
+
