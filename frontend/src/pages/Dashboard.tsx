@@ -19,11 +19,11 @@ export default function DashboardPage() {
   }, []);
 
   useSocket({
-    onSensorUpdate(payload) {
+    onSensorState(payload: any) {
       setSensors((prev) => prev.map((s) => (s.id === payload.sensorId ? { ...s, state: payload.state } : s)));
     },
-    onAlertUpdated(payload) {
-      if (payload.sensorId && payload.severity) {
+    onAlertEvent(payload: any) {
+      if (payload?.sensorId && payload?.severity) {
         const nextState = payload.severity === "CRITICAL" ? "CRITICAL" : "WARNING";
         setSensors((prev) => prev.map((s) => (s.id === payload.sensorId ? { ...s, state: nextState } : s)));
       }
@@ -42,14 +42,14 @@ export default function DashboardPage() {
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl font-semibold">Live Dashboard</h1>
-        <div className="w-72">
+        <div className="w-full sm:w-72">
           <Input placeholder="Search sensors..." value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {filtered.map((sensor) => (
           <SensorCard key={sensor.id} sensor={sensor} />
         ))}
@@ -57,4 +57,3 @@ export default function DashboardPage() {
     </section>
   );
 }
-

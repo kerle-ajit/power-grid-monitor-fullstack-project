@@ -18,7 +18,13 @@ export type AlertItem = {
   } | null;
 };
 
-export async function getAlerts(params?: { status?: string; includeSuppressed?: boolean; page?: number; pageSize?: number }) {
+export async function getAlerts(params?: {
+  status?: string;
+  sensorId?: string;
+  includeSuppressed?: boolean;
+  page?: number;
+  pageSize?: number;
+}) {
   const { data } = await apiClient.get<{ alerts: AlertItem[]; totalCount: number; page: number; pageSize: number }>("/alerts", {
     params
   });
@@ -36,4 +42,3 @@ export async function acknowledgeAlert(alertId: string) {
 export async function resolveAlert(alertId: string) {
   return (await apiClient.post(`/alerts/${alertId}/resolve`)).data;
 }
-

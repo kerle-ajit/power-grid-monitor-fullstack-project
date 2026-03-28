@@ -12,7 +12,9 @@ export function ReadingTable({ readings }: { readings: SensorHistoryRow[] }) {
             <TableHead>Current</TableHead>
             <TableHead>Temperature</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Anomaly Count</TableHead>
+            <TableHead>Triggered</TableHead>
+            <TableHead>Anomalies</TableHead>
+            <TableHead>Alert refs</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -23,7 +25,14 @@ export function ReadingTable({ readings }: { readings: SensorHistoryRow[] }) {
               <TableCell>{r.current.toFixed(2)}</TableCell>
               <TableCell>{r.temperature.toFixed(2)}</TableCell>
               <TableCell>{r.statusCode}</TableCell>
+              <TableCell>{r.triggered ? "Yes" : "No"}</TableCell>
               <TableCell>{r.anomalies.length}</TableCell>
+              <TableCell className="max-w-[12rem] truncate font-mono text-xs text-slate-400">
+                {r.anomalies
+                  .map((a) => a.alert?.id)
+                  .filter(Boolean)
+                  .join(", ") || "—"}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

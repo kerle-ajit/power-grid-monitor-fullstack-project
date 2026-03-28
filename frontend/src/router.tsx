@@ -5,6 +5,7 @@ import DashboardPage from "./pages/Dashboard";
 import AlertsPage from "./pages/Alerts";
 import SensorDetailPage from "./pages/SensorDetail";
 import SuppressionPage from "./pages/Suppression";
+import EscalationsPage from "./pages/Escalations";
 import { ProtectedRoute } from "./components/common/ProtectedRoute";
 
 export const router = createBrowserRouter([
@@ -20,8 +21,15 @@ export const router = createBrowserRouter([
       { index: true, element: <DashboardPage /> },
       { path: "alerts", element: <AlertsPage /> },
       { path: "sensors/:id", element: <SensorDetailPage /> },
-      { path: "suppression", element: <SuppressionPage /> }
+      { path: "suppression", element: <SuppressionPage /> },
+      {
+        path: "escalations",
+        element: (
+          <ProtectedRoute allowedRoles={["SUPERVISOR"]}>
+            <EscalationsPage />
+          </ProtectedRoute>
+        )
+      }
     ]
   }
 ]);
-

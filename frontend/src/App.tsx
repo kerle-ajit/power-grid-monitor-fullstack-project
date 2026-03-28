@@ -6,13 +6,12 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <div className="mx-auto flex max-w-7xl">
+      <div className="mx-auto flex max-w-7xl flex-col lg:flex-row">
         <Sidebar />
-        <main className="w-full p-4">
+        <main className="min-h-[calc(100vh-3.5rem)] w-full flex-1 p-4">
           <Outlet />
         </main>
       </div>
     </div>
   );
 }
-

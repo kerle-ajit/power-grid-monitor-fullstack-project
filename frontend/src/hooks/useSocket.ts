@@ -3,43 +3,40 @@ import { io, type Socket } from "socket.io-client";
 import { useAuth } from "./useAuth";
 
 type Handlers = {
-  onSensorUpdate?: (payload: any) => void;
-  onAlertCreated?: (payload: any) => void;
-  onAlertUpdated?: (payload: any) => void;
-  onEscalationEvent?: (payload: any) => void;
+  onSensorState?: (payload: unknown) => void;
+  onAlertEvent?: (payload: unknown) => void;
+  onEscalationEvent?: (payload: unknown) => void;
 };
 
+/**
+ * Connects to the same Socket.IO server as the backend (default path /socket.io on the API origin).
+ * Server joins zone rooms after JWT auth; no client-side join emit required.
+ */
 export function useSocket(handlers: Handlers) {
   const { user } = useAuth();
+  const handlersRef = useRef(handlers);
+  handlersRef.current = handlers;
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     if (!user?.token) return;
 
     const base = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
-    const socket = io(`${base}/ws`, {
+    const socket = io(base, {
       transports: ["websocket"],
       auth: { token: user.token }
     });
     socketRef.current = socket;
 
-    socket.on("connect", () => {
-      socket.emit("join_zones", { zoneIds: user.zoneIds, role: user.role });
-    });
-
-    socket.on("sensor_update", (p) => handlers.onSensorUpdate?.(p));
-    socket.on("sensor_state", (p) => handlers.onSensorUpdate?.(p));
-    socket.on("alert_created", (p) => handlers.onAlertCreated?.(p));
-    socket.on("alert_updated", (p) => handlers.onAlertUpdated?.(p));
-    socket.on("alert_event", (p) => handlers.onAlertUpdated?.(p));
-    socket.on("escalation_event", (p) => handlers.onEscalationEvent?.(p));
+    socket.on("sensor_state", (p) => handlersRef.current.onSensorState?.(p));
+    socket.on("alert_event", (p) => handlersRef.current.onAlertEvent?.(p));
+    socket.on("escalation_event", (p) => handlersRef.current.onEscalationEvent?.(p));
 
     return () => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [handlers.onAlertCreated, handlers.onAlertUpdated, handlers.onEscalationEvent, handlers.onSensorUpdate, user]);
+  }, [user?.token, user?.id]);
 
   return socketRef.current;
 }
-
