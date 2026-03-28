@@ -10,6 +10,7 @@ import { sensorsRouter } from "./modules/sensors/routes";
 import { alertsRouter } from "./modules/alerts/routes";
 import { suppressionsRouter } from "./modules/suppressions/routes";
 import { rulesRouter } from "./modules/rules/routes";
+import { escalationsRouter } from "./modules/escalations/routes";
 
 export function createApp() {
   const app = express();
@@ -30,6 +31,7 @@ export function createApp() {
   app.use("/alerts", alertsRouter);
   app.use("/suppressions", suppressionsRouter);
   app.use("/rules", rulesRouter);
+  app.use("/escalations", escalationsRouter);
 
   // 404
   app.use((_req, _res, _next) => {
