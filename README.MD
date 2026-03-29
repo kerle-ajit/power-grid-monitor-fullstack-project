@@ -15,34 +15,48 @@ It includes live ingestion, Redis/BullMQ workers, WebSocket streaming, dashboard
 
 🚀 Project Setup (Full Stack + Docker)
 
-1️⃣ Clone the Repository
+## Quick Start
 
-- git clone https://github.com/kerle-ajit/power-grid-monitor-fullstack-project.git
-- cd power-grid-monitor-fullstack-project
+Clone the project:
+```bash
+git clone https://github.com/kerle-ajit/power-grid-monitor-fullstack-project.git
+cd power-grid-monitor-fullstack-project
+```
 
-2️⃣ Start Full Stack Using Docker
+Start all services:
+```bash
+docker-compose up --build
+```
 
-Run this inside the project root:
-- docker-compose up --build
+Wait until all containers finish setting up, then verify:
+```bash
+docker ps -a
+```
 
- This will automatically:
+Enter the backend container and set up the database:
+```bash
+docker exec -it gridwatch-backend bash
+npx prisma migrate deploy
+```
 
-- Start backend, frontend, PostgreSQL, Redis
-- Run Prisma generate
-- Run Prisma DB push
-- Automatically execute prisma:seed
-- Start all services fully wired together
+If migrations fail, use:
+```bash
+npx prisma migrate dev --name init
+```
 
+Seed the database:
+```bash
+npm run prisma:seed
+```
 
-3️⃣ Access the App
-Frontend
+(Optional) Run the sensor simulator for live ingestion testing:
+```bash
+npm run prisma:simulator
+```
 
-👉 http://localhost:5173
+Backend: http://localhost:4000
 
-Backend API / WebSocket
-
-👉 http://localhost:4000
-
+Frontend: http://localhost:5173
 
 👤 Default Seeded Users
 
