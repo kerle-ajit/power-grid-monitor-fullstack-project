@@ -1,6 +1,8 @@
 GridWatch — Real-Time Power Grid Anomaly Monitoring
+
 GridWatch is a production-style full-stack platform for real-time anomaly detection in power-grid sensors.
 It includes live ingestion, Redis/BullMQ workers, WebSocket streaming, dashboards, and alert workflows.
+
 
 | Service                                            | Port   |
 | -------------------------------------------------- | ------ |
@@ -9,8 +11,9 @@ It includes live ingestion, Redis/BullMQ workers, WebSocket streaming, dashboard
 | **PostgreSQL**                                     | `5432` |
 | **Redis**                                          | `6379` |
 
-===================================================================================
+=======================================================
 🚀 Project Setup (Full Stack + Docker)
+
 1️⃣ Clone the Repository
 
 - git clone https://github.com/kerle-ajit/power-grid-monitor-fullstack-project.git
