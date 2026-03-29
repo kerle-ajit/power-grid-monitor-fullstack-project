@@ -1,5 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+// ⬇️ ADD THESE IMPORTS AT TOP
+import { Queue } from "bullmq";
+import { createClient } from "redis";
 
 const prisma = new PrismaClient();
 
@@ -120,6 +123,45 @@ async function main() {
       }
     });
   }
+
+    // ---------------------------------------------------------
+  // 🔥 LIVE TEST SEED FOR: WebSocket, Workers, Redis queues
+  // ---------------------------------------------------------
+
+  console.log("Creating live worker test batch...");
+
+  // 1) Create Redis connection like workers
+  const redis = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379" });
+  await redis.connect();
+
+  // 2) Use BullMQ queue identical to backend usage
+  const ingestQueue = new Queue("ingest_batches", {
+    connection: {
+      host: process.env.REDIS_HOST || "redis",
+      port: Number(process.env.REDIS_PORT) || 6379
+    }
+  });
+
+  // 3) Pick first 5 sensors for live test batch
+  const liveSensors = sensorsData.slice(0, 5);
+
+  // 4) Build a live anomaly-triggering reading batch
+  const liveBatch = liveSensors.map((s) => ({
+    sensorId: s.id,
+    timestamp: new Date(),
+    voltage: 300,             // triggers CRITICAL voltage anomaly
+    current: 20,
+    temperature: 95,          // triggers CRITICAL temperature anomaly
+    statusCode: 2
+  }));
+
+  // 5) Push job to ingest queue
+  await ingestQueue.add("batch", { readings: liveBatch });
+
+  console.log("✔ Live ingest batch pushed to Redis queue.");
+  console.log("✔ This will trigger anomaly worker + alert worker + WebSocket broadcast.");
+  
+  await redis.disconnect();
 
   console.log("Seed complete");
   console.log("Users:");

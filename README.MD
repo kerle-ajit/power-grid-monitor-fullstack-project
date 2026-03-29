@@ -1,20 +1,99 @@
-# GridWatch
+GridWatch — Real-Time Power Grid Anomaly Monitoring
+GridWatch is a production-style full-stack platform for real-time anomaly detection in power-grid sensors.
+It includes live ingestion, Redis/BullMQ workers, WebSocket streaming, dashboards, and alert workflows.
 
-Production-style real-time anomaly detection platform for power-grid sensors.
+| Service                                            | Port   |
+| -------------------------------------------------- | ------ |
+| **Frontend (Vite + React)**                        | `5173` |
+| **Backend API + WebSocket (Node.js/Nest/Express)** | `4000` |
+| **PostgreSQL**                                     | `5432` |
+| **Redis**                                          | `6379` |
 
-## Setup
+===================================================================================
+🚀 Project Setup (Full Stack + Docker)
+1️⃣ Clone the Repository
 
-1. Run:
-   - `docker-compose up --build`
-2. Frontend:
-   - [http://localhost:5173](http://localhost:5173)
-3. Backend health:
-   - [http://localhost:4000/healthz](http://localhost:4000/healthz)
+- git clone https://github.com/kerle-ajit/power-grid-monitor-fullstack-project.git
+- cd power-grid-monitor-fullstack-project
 
-Default seeded users:
-- `operator_north` / `password123`
-- `operator_south` / `password123`
-- `supervisor` / `password123`
+2️⃣ Start Full Stack Using Docker
+
+Run this inside the project root:
+- docker-compose up --build
+
+ This will automatically:
+
+- Start backend, frontend, PostgreSQL, Redis
+- Run Prisma generate
+- Run Prisma DB push
+- Automatically execute prisma:seed
+- Start all services fully wired together
+
+
+3️⃣ Access the App
+Frontend
+
+👉 http://localhost:5173
+
+Backend API / WebSocket
+
+👉 http://localhost:4000
+
+
+👤 Default Seeded Users
+
+These users are created automatically during docker startup:
+
+| Username         | Password      | Role       |
+| ---------------- | ------------- | ---------- |
+| `operator_north` | `password123` | OPERATOR   |
+| `operator_south` | `password123` | OPERATOR   |
+| `supervisor`     | `password123` | SUPERVISOR |
+
+===============================================================================
+
+🧪 Manual Prisma Setup for seed.ts file and simulator.ts
+
+1. If you want to run migrations / seed manually:
+
+- docker exec -it container_id sh
+
+2. Install dependencies:
+
+- npm install
+
+3. Generate Prisma client:
+
+- npm run prisma:generate
+
+4. npm run prisma:generate
+
+- npx prisma db push
+
+5. Run the seed file
+- npm run prisma:seed
+================================================================================
+
+Test Simulator.ts (optional, for live ingestion testing)
+
+This sends new sensor readings every 5 seconds into the queue.
+
+Inside backend container:
+
+- npx ts-node prisma/simulator.ts
+
+This will:
+
+1. Insert live ingestBatch rows
+- Push jobs to BullMQ ingest queue
+- Trigger ingest worker
+- Trigger rules → alerts → escalation
+- Stream data via WebSocket to frontend
+
+Some parts of the system—specifically WebSocket real-time events, background workers, and queue-based anomaly processing—have been implemented in code but have not yet been fully tested end-to-end due to time constraints.
+
+
+===================================================================================
 
 ## Architecture
 
@@ -52,6 +131,8 @@ Core tables:
 - `escalation_log` (`EscalationLog`): one row per alert (`unique(alertId)`) to enforce exactly-once escalation.
 - `suppression`: suppression windows per sensor.
 - `sensor_state_row`: cached sensor status for low-latency dashboard queries.
+
+
 
 Important indexes:
 - `reading(sensorId, timestamp)`
@@ -132,8 +213,10 @@ Performance approach:
   - 1 supervisor
   - 48 hours of readings
 
-## Production Gap
+## Testing Gap
 
-With one extra week, the highest-value addition would be:
-- stronger observability + SLO instrumentation (OpenTelemetry traces, worker lag metrics, ingest and history latency dashboards, dead-letter queue replay tooling).
+Some parts of the system—specifically WebSocket real-time events, background workers, and queue-based anomaly processing—have been implemented in code but have not yet been fully tested end-to-end due to time constraints.
+
+I will test, validate, and refine these components soon.
+
 
