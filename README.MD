@@ -47,6 +47,11 @@ npx prisma migrate dev --name init
 Seed the database:
 ```bash
 npm run prisma:seed
+
+
+then go to UI 
+username : operator_north 
+password : password123
 ```
 
 (Optional) Run the sensor simulator for live ingestion testing:
@@ -67,7 +72,6 @@ These users are created automatically during docker startup:
 | `operator_north` | `password123` | OPERATOR   |
 | `operator_south` | `password123` | OPERATOR   |
 | `supervisor`     | `password123` | SUPERVISOR |
-
 ===============================================================================
 
 🧪 Manual Prisma Setup for seed.ts file and simulator.ts
