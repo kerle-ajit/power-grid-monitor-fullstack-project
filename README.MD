@@ -12,6 +12,7 @@ It includes live ingestion, Redis/BullMQ workers, WebSocket streaming, dashboard
 | **Redis**                                          | `6379` |
 
 =======================================================
+
 🚀 Project Setup (Full Stack + Docker)
 
 1️⃣ Clone the Repository
