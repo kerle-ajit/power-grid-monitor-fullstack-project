@@ -3,6 +3,14 @@ GridWatch — Real-Time Power Grid Anomaly Monitoring
 GridWatch is a production-style full-stack platform for real-time anomaly detection in power-grid sensors.
 It includes live ingestion, Redis/BullMQ workers, WebSocket streaming, dashboards, and alert workflows.
 
+Problem statement for project : 
+In real-world grid systems, sensors generate large amounts of data continuously. Detecting issues manually is difficult and slow. My system solves this by automatically analyzing sensor data and generating alerts in real time.
+
+Tech Stack :
+I used Node.js with TypeScript for backend, PostgreSQL with Prisma for database, Redis and BullMQ for background job processing, and Socket.IO for real-time updates.
+
+
+
 
 | Service                                            | Port   |
 | -------------------------------------------------- | ------ |
